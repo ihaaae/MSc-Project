@@ -10,7 +10,7 @@ class Point(enum.Enum):
     white_eye = -2
 
 
-boardSize = 5
+boardSize = 4
 
 # board is [Matrix of point], a boardsize * boardsize size matrix
 # point is
