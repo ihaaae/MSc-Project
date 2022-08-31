@@ -5,7 +5,7 @@ class AI:
         print("test")
 
     def minimax_search(self, game, state):
-        move = max(game.actions(state), key=lambda a: self.min_value(game, game.result(game, a)))
+        move = max(game.actions(state), key=lambda a: self.min_value(game, game.result(state, a)))
         value = self.min_value(game, game.result(state, move))
         print(f"minimax_search: value: {value} move: {move}")
         return move

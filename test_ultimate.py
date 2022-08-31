@@ -6,6 +6,5 @@ go = Go()
 ai = AI()
 state0 = GoState()
 
-go.actions(state0)
 print(ai.minimax_search(go, state0))
 go.actions(state0)

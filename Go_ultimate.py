@@ -1,12 +1,14 @@
 import numpy as np
 import enum
 
-class point(enum.Enum):
+
+class Point(enum.Enum):
     black = 1
     white = 2
     empty = 0
-    black_eye = -black
-    white_eye = -white
+    black_eye = -1
+    white_eye = -2
+
 
 boardSize = 5
 
@@ -17,10 +19,10 @@ white = 2
 empty = 0
 
 
-def neighbors(x, y) -> list[tuple[int, int]]:
-    def belong_board(x, y):
+def neighbors(x: int, y: int) -> list[tuple[int, int]]:
+    def belong_board(xn: int, yn: int) -> bool:
         global boardSize
-        return x % boardSize == x and y % boardSize == y
+        return xn % boardSize == xn and yn % boardSize == yn
 
     nxs = [0, 0, -1, 1]
     nys = [-1, 1, 0, 0]
@@ -60,17 +62,13 @@ class GoState:
 
 
 class Go:
-    def result(self, state, action):
+    def result(self, state: GoState, action: tuple[int, int]) -> GoState:
         self.turn = 2 - state.idx % 2
 
-        def color_empty(state, action):
-            x = action[0]
-            y = action[1]
-            if state.board[x, y] == empty:
-                state.board[x, y] = self.turn
-            return state
-
-        state = color_empty(state, action)
+        x = action[0]
+        y = action[1]
+        if state.board[x, y] == empty:
+            state.board[x, y] = self.turn
 
         state = self.update_enemy_liberty(state, action)
 
@@ -86,29 +84,33 @@ class Go:
 
         return state
 
-    def actions(self, state) -> list[tuple[int, int]]:
+    @staticmethod
+    def actions(state: GoState) -> list[tuple[int, int]]:
         board = state.board
         actions = []
-        for row in board:
-            for element in row:
-                if element == empty:
-                    actions.append(element)
+        for i in range(boardSize):
+            for j in range(boardSize):
+                if board[i][j] == empty:
+                    actions.append((i, j))
 
         return actions
 
-    def utility(self, state) -> int:
+    @staticmethod
+    def utility(state: GoState) -> int:
         def reach_black(point: tuple[int, int]) -> bool:
             for element in neighbors(point[0], point[1]):
                 p = state.board[element[0], element[1]]
                 if p == black or p == -1:
                     return True
             return False
+
         def reach_white(point: tuple[int, int]) -> bool:
             for element in neighbors(point[0], point[1]):
                 p = state.board[element[0], element[1]]
                 if p == white or p == -2:
                     return True
             return False
+
         black_score = 0
         white_score = 0
         for i in range(boardSize):
@@ -124,7 +126,11 @@ class Go:
                         white_score += 1
         return black_score - white_score
 
-    def update_enemy_liberty(self, state, action: tuple[int, int]):
+    @staticmethod
+    def is_terminal(state: GoState) -> bool:
+        return state.idx >= boardSize * 2
+
+    def update_enemy_liberty(self, state: GoState, action: tuple[int, int]) -> GoState:
         x = action[0]
         y = action[1]
         state.enemies_current_stone = self.nearby_enemy_worms(state, action)
@@ -134,14 +140,14 @@ class Go:
 
         return state
 
-    def capture_enemy(self, state):
+    def capture_enemy(self, state: GoState) -> GoState:
         for enemy_worm in state.enemies_current_stone:
             if len(state.liberties[enemy_worm]) == 0:
-               self.clear_worm(state, enemy_worm)
+                self.clear_worm(state, enemy_worm)
 
         return state
 
-    def update_worm(self, state, action):
+    def update_worm(self, state: GoState, action: tuple[int, int]) -> GoState:
         def transformworm(nw):
             state.worms[state.worms == nw] = state.idx
 
@@ -160,7 +166,7 @@ class Go:
         x = action[0]
         y = action[1]
         state.liberties.append([(n[0], n[1]) for n in neighbors(x, y)
-                               if state.board[n[0]][n[1]] == empty or state.board[n[0]][n[1]] == -self.turn])
+                                if state.board[n[0]][n[1]] == empty or state.board[n[0]][n[1]] == -self.turn])
         for neighbor_worm in state.neighbors_current_stone:
             state.liberties.reduceliberty(neighbor_worm, x, y)
             state.liberties.mergeliberty(neighbor_worm, state.idx)
@@ -171,17 +177,19 @@ class Go:
         x = action[0]
         y = action[1]
         if len(state.liberties[state.worms[x][y]]) == 0:
-            state.clear_worm(state, state.worms[x][y])
+            self.clear_worm(state, state.worms[x][y])
 
         return state
 
-    def nearby_enemy_worms(self,state, posn):
+    @staticmethod
+    def nearby_enemy_worms(state, posn):
         x = posn[0]
         y = posn[1]
         return [state.worms[n[0]][n[1]] for n in neighbors(x, y)
                 if state.worms[n[0]][n[1]] % 2 == (state.board[x][y] + 1) % 2 and state.worms[n[0]][n[1]] != 0]
 
-    def nearby_own_worms(self, state, action):
+    @staticmethod
+    def nearby_own_worms(state, action):
         x = action[0]
         y = action[1]
         return [state.worms[n[0]][n[1]] for n in neighbors(x, y)
@@ -199,7 +207,8 @@ class Go:
 
         return state
 
-    def change_turn(self, state):
+    @staticmethod
+    def change_turn(state):
         state.idx += 1
         return state
 
