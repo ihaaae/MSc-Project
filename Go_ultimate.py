@@ -86,13 +86,15 @@ class Go:
 
         return state
 
-    def actions(self, state):
+    def actions(self, state) -> list[tuple[int, int]]:
         board = state.board
         actions = []
         for row in board:
             for element in row:
                 if element == empty:
                     actions.append(element)
+
+        return actions
 
     def utility(self, state) -> int:
         def reach_black(point: tuple[int, int]) -> bool:
