@@ -1,4 +1,12 @@
 import numpy as np
+import enum
+
+class point(enum.Enum):
+    black = 1
+    white = 2
+    empty = 0
+    black_eye = -black
+    white_eye = -white
 
 boardSize = 5
 
